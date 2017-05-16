@@ -1,0 +1,4 @@
+[CONFIG]
+path_to_serials = ../serials
+path_to_adv = ../adv
+max_active_serials = 4
