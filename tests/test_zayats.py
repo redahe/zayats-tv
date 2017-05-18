@@ -18,6 +18,10 @@ class TestZayats(unittest.TestCase):
         self.assertEquals('serials', zay.path_to_serials)
         self.assertEquals('adv', zay.path_to_adv)
 
+    def test2_make_play_list(self):
+        lst = zay.make_play_list()
+        print lst
+
 
 if __name__ == '__main__':
     unittest.main()
