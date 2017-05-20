@@ -1,7 +1,9 @@
 #!/usr/bin/python
 
 import os
+import sys
 import time
+import pprint
 import random
 import ConfigParser
 import logging
@@ -11,10 +13,9 @@ WORK_DIR = os.path.join(os.path.expanduser('~'), '.zayats-tv')
 
 CONFIG_FILE = os.path.join(WORK_DIR, 'config')
 WATCHED_FILE = os.path.join(WORK_DIR, 'watched')
-PLAYLIST_FILE = os.path.join(WORK_DIR, 'last.m3u')
 
 WAIT_AFTER_MOUNT_SECS = 5
-ITERATIONS = 3
+LAUNCH_PLAYER = 'mpv'
 
 
 # ----cfg-----------
@@ -63,6 +64,21 @@ def read_config():
         path_to_adv = readpath(config.get(SECTION, PATH_TO_ADV), dirbase)
 
 
+def read_state():
+    with open(WATCHED_FILE) as f:
+        data = eval(f.read())
+    global active_serials
+    global last_watched
+    active_serials = data[0]
+    last_watched = data[1]
+
+
+def save_state():
+    data = str([active_serials, last_watched])
+    with open(WATCHED_FILE, 'w') as f:
+        pprint.pprint(data, f)
+
+
 def mount_if_neccessery(path):
     logging.info('Checking serials path: ' + path)
     while not os.path.exists(path):
@@ -86,7 +102,7 @@ def adv_gener():
     lst = list_files(path_to_adv)
     if lst:
         while True:
-            yield lst[random.randint(len(lst))]
+            yield lst[random.randint(0, len(lst)-1)]
 
 
 def episodes_in_season_gener(serial):
@@ -103,13 +119,13 @@ def episodes_in_season_gener(serial):
 
 
 def make_play_list():
+    read_state()
     playlist_serials = list(active_serials)
     serials = set(os.listdir(path_to_serials))
     target = list(serials - set(playlist_serials))
     random.shuffle(target)
     need_serials = int(config.get(SECTION, MAX_ACTIVE_SERIALS)) - len(playlist_serials)
     playlist_serials.extend(target[:min(need_serials, len(target))])
-
     result = []
     adv_gen = adv_gener()
     gens = [episodes_in_season_gener(serial) for serial in playlist_serials]
@@ -126,21 +142,38 @@ def make_play_list():
     return result
 
 
-def show():
-    pl = make_play_list()
-    with open(PLAYLIST_FILE, 'w') as f:
-        f.writelines(pl)
+def watch():
+    for line in sys.stdin.readlines():
+        ind = line.find('Playing: ')
+        if ind != -1:
+            playing = line[ind+9:]
+            playing = playing.strip()
+            if playing.startswith(path_to_serials):
+                start = len(path_to_serials)
+                end = playing.find(os.sep, start+1)
+                serial = playing[start:end]
+                serial = serial.replace(os.sep, '')
+                print 'SERIAL: '+serial+' EP: '+playing+'!!!!'
 
 
 def main():
     read_config()
-    if not path_to_serials:
-        logging.error('path_to_serials is not specified')
-    mount_if_neccessery(path_to_serials)
-    if path_to_adv:
-        mount_if_neccessery(path_to_adv)
+    if '-watch' in sys.argv:
+        print('zayats-tv watching')
+        watch()
     else:
-        logging.warn('path_to_adv is not specified')
+
+        if not path_to_serials:
+            logging.error('path_to_serials is not specified')
+        mount_if_neccessery(path_to_serials)
+        if path_to_adv:
+            mount_if_neccessery(path_to_adv)
+        else:
+            logging.warn('path_to_adv is not specified')
+
+        for line in make_play_list():
+            print(line)
+
 
 if __name__ == '__main__':
     main()
