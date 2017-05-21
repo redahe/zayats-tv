@@ -1,12 +1,14 @@
 #!/usr/bin/python
 
 import os
+import ast
 import sys
 import time
 import pprint
 import random
 import ConfigParser
 import logging
+from subprocess import call
 
 
 WORK_DIR = os.path.join(os.path.expanduser('~'), '.zayats-tv')
@@ -43,7 +45,7 @@ max_active_serials = 0
 # ----- init module-----
 random.seed()
 LOG_FORMAT = '%(asctime)s %(message)s'
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG, format=LOG_FORMAT)
+logging.basicConfig(stream=sys.stderr, level=logging.INFO, format=LOG_FORMAT)
 
 
 def readpath(path, base):
@@ -71,7 +73,7 @@ def read_state():
         logging.warn('NO WATCHED LIST: ' + WATCHED_FILE + ' USE EMPTY')
         return
     with open(WATCHED_FILE) as f:
-        data = eval(f.read())
+        data = ast.literal_eval(f.read())
     global active_serials
     global last_watched
     active_serials = data[0]
@@ -79,17 +81,17 @@ def read_state():
 
 
 def save_state():
-    data = str([active_serials, last_watched])
+    data = ([active_serials, last_watched])
     with open(WATCHED_FILE, 'w') as f:
         pprint.pprint(data, f)
 
 
-def mount_if_neccessery(path):
+def mount_if_necessery(path):
     logging.info('Checking serials path: ' + path)
     while not os.path.exists(path):
         logging.warn("Path doesn't exist:" + path)
         logging.info("Trying to mount external storage..")
-        # TODO: MOUNT
+        call(["./mount.sh"], shell=True, stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr)
         time.sleep(WAIT_AFTER_MOUNT_SECS)
 
 
@@ -167,7 +169,6 @@ def stop_if_season_ended():
 
 
 def make_play_list():
-    read_state()
     logging.info('ACTIVE SERIALS: ' + str(active_serials))
     stop_if_season_ended()
     logging.info('FILTER RECENTLY ENDED SEASONS: ' + str(active_serials))
@@ -201,6 +202,8 @@ def make_play_list():
 
 
 def watch():
+    global active_serials
+    active_serials.extend([None] * (max_active_serials - len(active_serials)))
     pos = 0
     watching = None
     for line in sys.stdin.readlines():
@@ -223,19 +226,21 @@ def watch():
                 watching = (serial, playing)
                 pos = (pos + 1) % max_active_serials
     save_state()
+    logging.info('STATE SAVED')
 
 
 def main():
     read_config()
+    read_state()
     if ('-watch' in sys.argv):
         print('zayats-tv watching')
         watch()
     else:
         if not path_to_serials:
             logging.error('path_to_serials is not specified')
-        mount_if_neccessery(path_to_serials)
+        mount_if_necessery(path_to_serials)
         if path_to_adv:
-            mount_if_neccessery(path_to_adv)
+            mount_if_necessery(path_to_adv)
         else:
             logging.warn('path_to_adv is not specified')
         for line in make_play_list():
