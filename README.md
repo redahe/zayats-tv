@@ -9,8 +9,8 @@
 
 ## Requirements
 
-*mpv
-*python
+* mpv
+* python
 
 ## Installation
 
@@ -26,16 +26,17 @@ max_active_serials = 4
 adv_per_pause = 3
 ```
 
-path_to_serials - path to series. Each show should live in a separate folder. Folders can containt subfolders with seasons, when a  season is watched zayats-tv switchs to a next random show.
-path_to_adv - path to clips.
-max_active_serials - a number of simultaniously watched serials (default -4). 
-adv_per_pause - how many clips show between episodes (default -3). 
+path_to_serials - path to series. Each show should live in a separate folder. Folders can containt subfolders with seasons, when a  season is watched zayats-tv switchs to a next random show.<br>
+path_to_adv - path to clips. <br>
+max_active_serials - a number of simultaniously watched serials (default -4). <br>
+adv_per_pause - how many clips to show between episodes (default -3). <br>
 
 * Change a mount-script mount.sh if necessery.
 
 ## Run
 
-Launch zayats_tv.sh
+* Launch zayats_tv.sh
+<br>
 MPV parameters can be changed in that shell-script.
 You can control mpv from a keyboard. Press q - to exit. 
 
