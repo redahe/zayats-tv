@@ -35,7 +35,6 @@ config = ConfigParser.ConfigParser({MAX_ACTIVE_SERIALS: '4',
 active_serials = []
 last_watched = {}
 
-
 # ----inner variables ----
 
 path_to_serials = None
@@ -76,6 +75,7 @@ def read_state():
         data = ast.literal_eval(f.read())
     global active_serials
     global last_watched
+    global start_from
     active_serials = data[0]
     last_watched = data[1]
 
@@ -225,6 +225,12 @@ def watch():
                 active_serials[pos] = serial
                 watching = (serial, playing)
                 pos = (pos + 1) % max_active_serials
+
+    if watching:
+        active_serials = active_serials[pos-1:]+active_serials[:pos-1]
+    else:
+        active_serials = active_serials[pos:]+active_serials[:pos]
+
     save_state()
     logging.info('STATE SAVED')
 
