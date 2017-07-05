@@ -9,7 +9,7 @@ import random
 import ConfigParser
 import logging
 from subprocess import call
-
+from shutil import copyfile
 
 WORK_DIR = os.path.join(os.path.expanduser('~'), '.zayats-tv')
 
@@ -249,6 +249,8 @@ def main():
             mount_if_necessery(path_to_adv)
         else:
             logging.warn('path_to_adv is not specified')
+
+        copyfile(WATCHED_FILE, WATCHED_FILE+'_backup')  # backup
         for line in make_play_list():
             print(line)
 
